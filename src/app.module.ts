@@ -1,8 +1,13 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
+import { AuthModule } from '@app/auth/auth.module';
+import { UsersModule } from '@app/users/users.module';
+import { CommonModule } from '@app/common/common.module';
+import { DatabaseModule } from '@app/database/database.module';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from '@app/auth/guards/roles.guard';
+import { AccessGuard } from '@app/auth/guards/access.guard';
 
 @Module({
   imports: [
@@ -16,8 +21,20 @@ import * as Joi from 'joi';
         DATABASE_NAME: Joi.string().required(),
       }),
     }),
+    DatabaseModule,
+    CommonModule,
+    AuthModule,
+    UsersModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AccessGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule {}
