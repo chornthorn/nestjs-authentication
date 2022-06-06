@@ -13,6 +13,7 @@ import { CreateUserDto } from '@app/users/dto/create-user.dto';
 import { User } from '@app/users/entities/user.entity';
 import { UpdateRefreshTokenDto } from '@app/auth/dto/update-refresh-token.dto';
 import { LoginDto } from '@app/auth/dto/login.dto';
+import { Role } from '@app/common/types/role.type';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +30,9 @@ export class AuthService {
 
   async login(loginDto: LoginDto): Promise<AuthTokenDto> {
     const user = await this.usersService.findOneByEmail(loginDto.email);
-    if (!user) throw new BadRequestException('Invalid email or password.');
+    if (!user || user.password == null) {
+      throw new BadRequestException('Invalid email or password.');
+    }
 
     const comparePassword = await this.compareEncrypt(
       loginDto.password,
@@ -88,6 +91,21 @@ export class AuthService {
       throw new BadRequestException('Get new access token not successfully');
     }
     return userUpdate;
+  }
+
+  public async googleUser(user: any) {
+    const userEntity = await this.usersService.findOneByEmail(user.email);
+    if (!userEntity) {
+      const userDto = new CreateUserDto();
+      userDto.firstName = user.firstName;
+      userDto.lastName = user.lastName;
+      userDto.email = user.email;
+      userDto.role = Role.USER;
+      const users = await this.usersService.create(userDto);
+      return await this._generateToken(users);
+    } else {
+      return await this._generateToken(userEntity);
+    }
   }
 
   async logout() {
