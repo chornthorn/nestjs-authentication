@@ -2,9 +2,10 @@ import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
+import { Constants } from '@app/common/constants/constants';
 
 @Injectable()
-export class AccessGuard extends AuthGuard('jwt') {
+export class AccessGuard extends AuthGuard(Constants.JWT) {
   constructor(private readonly reflector: Reflector) {
     super();
   }
