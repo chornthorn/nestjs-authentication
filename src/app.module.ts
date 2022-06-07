@@ -8,6 +8,7 @@ import { DatabaseModule } from '@app/database/database.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from '@app/auth/guards/roles.guard';
 import { AccessGuard } from '@app/auth/guards/access.guard';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AccessGuard } from '@app/auth/guards/access.guard';
     CommonModule,
     AuthModule,
     UsersModule,
+    CategoriesModule,
   ],
   providers: [
     {

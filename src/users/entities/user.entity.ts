@@ -1,6 +1,6 @@
-import { Role } from '@app/common/types/role.type';
 import { Column, Entity } from 'typeorm';
-import { AbstractEntity } from '@app/database/abstract.entity';
+import { Role } from '../../common/types/role.type';
+import { AbstractEntity } from '../../database/abstract.entity';
 
 @Entity('tbl_users')
 export class User extends AbstractEntity {

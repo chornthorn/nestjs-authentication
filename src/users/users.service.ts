@@ -47,7 +47,7 @@ export class UsersService {
   }
 
   async findOneByID(id: number) {
-    const user = await this.usersRepository.findOneBy({ id });
+    const user = await this.usersRepository.findOne({ id });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -55,15 +55,15 @@ export class UsersService {
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    return await this.usersRepository.findOneBy({ email });
+    return await this.usersRepository.findOne({ email });
   }
 
   async findOneByUsername(username: string): Promise<User> {
-    return await this.usersRepository.findOneBy({ username });
+    return await this.usersRepository.findOne({ username });
   }
 
   async findOneByOAuthID(oauthId: string): Promise<User> {
-    return await this.usersRepository.findOneBy({ oauthId });
+    return await this.usersRepository.findOne({ oauthId });
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
@@ -94,7 +94,7 @@ export class UsersService {
   }
 
   async userProfile(email: string) {
-    const user = await this.usersRepository.findOneBy({ email });
+    const user = await this.usersRepository.findOne({ email });
     if (!user) throw new NotFoundException('User not found.');
     delete user.password;
     return user;
