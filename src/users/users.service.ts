@@ -21,6 +21,12 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
+    const randomNumber = this.getRandomInt(100, 1000);
+    createUserDto.username = (
+      createUserDto.firstName +
+      createUserDto.lastName +
+      randomNumber
+    ).toLowerCase();
     const _entity = this.usersRepository.create({ ...createUserDto });
     return await this.usersRepository.save(_entity);
   }
@@ -40,7 +46,7 @@ export class UsersService {
     return new PaginateDto<User>(entities, paginateMetaDto);
   }
 
-  async findOne(id: number) {
+  async findOneByID(id: number) {
     const user = await this.usersRepository.findOneBy({ id });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -50,6 +56,14 @@ export class UsersService {
 
   async findOneByEmail(email: string): Promise<User> {
     return await this.usersRepository.findOneBy({ email });
+  }
+
+  async findOneByUsername(username: string): Promise<User> {
+    return await this.usersRepository.findOneBy({ username });
+  }
+
+  async findOneByOAuthID(oauthId: string): Promise<User> {
+    return await this.usersRepository.findOneBy({ oauthId });
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
@@ -87,7 +101,7 @@ export class UsersService {
   }
 
   async remove(id: number) {
-    const user = await this.findOne(id);
+    const user = await this.findOneByID(id);
     const result = await this.usersRepository.remove(user);
     if (!result) {
       throw new BadRequestException('User delete not successfully');
@@ -95,5 +109,17 @@ export class UsersService {
     return {
       data: 'User delete successfully',
     };
+  }
+
+  /**
+   * Gets random int
+   * @param min
+   * @param max
+   * @returns random int - min & max inclusive
+   */
+  private getRandomInt(min, max): number {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 }

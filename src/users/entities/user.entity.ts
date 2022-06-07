@@ -4,6 +4,12 @@ import { AbstractEntity } from '@app/database/abstract.entity';
 
 @Entity('tbl_users')
 export class User extends AbstractEntity {
+  @Column({
+    unique: true,
+    nullable: true,
+  })
+  oauthId: string;
+
   @Column()
   firstName: string;
 
@@ -12,6 +18,13 @@ export class User extends AbstractEntity {
 
   @Column({
     unique: true,
+    nullable: true,
+  })
+  username: string;
+
+  @Column({
+    unique: true,
+    nullable: true,
   })
   email: string;
 
@@ -21,6 +34,9 @@ export class User extends AbstractEntity {
     default: Role.USER,
   })
   role: Role;
+
+  @Column({ default: 'local' }) // local: email and password
+  provider: string;
 
   @Column({ nullable: true })
   password: string;

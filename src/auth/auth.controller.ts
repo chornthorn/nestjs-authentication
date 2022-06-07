@@ -11,11 +11,15 @@ import { AuthService } from './auth.service';
 import { CurrentUser } from '@app/common/decorators/current-user.decorator';
 import { CreateUserDto } from '@app/users/dto/create-user.dto';
 import { Public } from '@app/common/decorators/public.decorator';
-import { LoginDto } from '@app/auth/dto/login.dto';
+import {
+  LoginWithEmailDto,
+  LoginWithUsernameDto,
+} from '@app/auth/dto/login.dto';
 import { JwtRefreshPayload } from '@app/common/types/jwt-refresh-payload.type';
 import { RefreshGuard } from '@app/auth/guards/refresh.guard';
 import { GoogleGuard } from '@app/auth/guards/google.guard';
 import { TransformInterceptor } from '@app/common/interceptors/transform.interceptor';
+import { FacebookGuard } from '@app/auth/guards/facebook.guard';
 
 @UseInterceptors(TransformInterceptor)
 @Controller('auth')
@@ -23,15 +27,21 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
-  @Post('register')
+  @Post('local/register')
   register(@Body() createUserDto: CreateUserDto) {
     return this.authService.register(createUserDto);
   }
 
   @Public()
-  @Post('login')
-  login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  @Post('local/login/email')
+  login(@Body() loginDto: LoginWithEmailDto) {
+    return this.authService.loginWithEmail(loginDto);
+  }
+
+  @Public()
+  @Post('local/login/username')
+  loginWithUsername(@Body() loginDto: LoginWithUsernameDto) {
+    return this.authService.loginWithUsername(loginDto);
   }
 
   @Public()
@@ -61,5 +71,22 @@ export class AuthController {
   @Get('google/callback')
   async googleAuthCallback(@Req() req) {
     return this.authService.googleUser(req.user);
+  }
+
+  /*
+    Facebook authentication
+   */
+  @Public()
+  @UseGuards(FacebookGuard)
+  @Get('facebook')
+  async facebookAuth() {
+    console.log('Login with facebook');
+  }
+
+  @Public()
+  @UseGuards(FacebookGuard)
+  @Get('facebook/callback')
+  async facebookAuthCallback(@Req() req) {
+    return this.authService.facebookUser(req.user);
   }
 }

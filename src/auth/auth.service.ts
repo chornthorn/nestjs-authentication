@@ -12,8 +12,12 @@ import { AuthTokenDto } from '@app/auth/dto/auth-token.dto';
 import { CreateUserDto } from '@app/users/dto/create-user.dto';
 import { User } from '@app/users/entities/user.entity';
 import { UpdateRefreshTokenDto } from '@app/auth/dto/update-refresh-token.dto';
-import { LoginDto } from '@app/auth/dto/login.dto';
+import {
+  LoginWithEmailDto,
+  LoginWithUsernameDto,
+} from '@app/auth/dto/login.dto';
 import { Role } from '@app/common/types/role.type';
+import { Constants } from '@app/common/constants/constants';
 
 @Injectable()
 export class AuthService {
@@ -28,18 +32,27 @@ export class AuthService {
     return await this._generateToken(user);
   }
 
-  async login(loginDto: LoginDto): Promise<AuthTokenDto> {
+  async loginWithEmail(loginDto: LoginWithEmailDto): Promise<AuthTokenDto> {
     const user = await this.usersService.findOneByEmail(loginDto.email);
+    return await this.validatePassword(user, loginDto.password);
+  }
+
+  async loginWithUsername(loginDto: LoginWithUsernameDto) {
+    const user = await this.usersService.findOneByUsername(loginDto.username);
+    return await this.validatePassword(user, loginDto.password);
+  }
+
+  private async validatePassword(
+    user: User,
+    password: string,
+  ): Promise<AuthTokenDto> {
     if (!user || user.password == null) {
-      throw new BadRequestException('Invalid email or password.');
+      throw new BadRequestException('Invalid credential');
     }
 
-    const comparePassword = await this.compareEncrypt(
-      loginDto.password,
-      user.password,
-    );
+    const comparePassword = await this.compareEncrypt(password, user.password);
     if (!comparePassword) {
-      throw new BadRequestException('Invalid email or password.');
+      throw new BadRequestException('Invalid credential');
     }
     return await this._generateToken(user);
   }
@@ -64,7 +77,12 @@ export class AuthService {
   }
 
   async _generateToken(user: User) {
-    const accessAndRefresh = new CreateTokenDto(user.id, user.email, user.role);
+    const accessAndRefresh = new CreateTokenDto(
+      user.id,
+      user.username,
+      user.email,
+      user.role,
+    );
     const generate = await this.generateToken(accessAndRefresh);
     const updateRefreshDto = new UpdateRefreshTokenDto(
       user.id,
@@ -99,8 +117,29 @@ export class AuthService {
       const userDto = new CreateUserDto();
       userDto.firstName = user.firstName;
       userDto.lastName = user.lastName;
+      userDto.username = user.username;
       userDto.email = user.email;
       userDto.role = Role.USER;
+      userDto.provider = Constants.GOOGLE;
+      userDto.oauthId = user.id;
+      const users = await this.usersService.create(userDto);
+      return await this._generateToken(users);
+    } else {
+      return await this._generateToken(userEntity);
+    }
+  }
+
+  public async facebookUser(user: any) {
+    const userEntity = await this.usersService.findOneByOAuthID(user.id);
+    if (!userEntity) {
+      const userDto = new CreateUserDto();
+      userDto.firstName = user.firstName;
+      userDto.lastName = user.lastName;
+      userDto.username = user.username;
+      userDto.email = null;
+      userDto.role = Role.USER;
+      userDto.provider = Constants.FACEBOOK;
+      userDto.oauthId = user.id;
       const users = await this.usersService.create(userDto);
       return await this._generateToken(users);
     } else {
@@ -121,6 +160,7 @@ export class AuthService {
           userId: createToken.userId,
           email: createToken.email,
           roles: createToken.roles,
+          username: createToken.username,
         },
         {
           secret: 'access-token-secret',
@@ -132,6 +172,7 @@ export class AuthService {
           userId: createToken.userId,
           email: createToken.email,
           roles: createToken.roles,
+          username: createToken.username,
         },
         {
           secret: 'refresh-token-secret',

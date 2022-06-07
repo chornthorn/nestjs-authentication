@@ -1,21 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Profile, Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
 import { OAuthPayload } from '@app/common/interfaces/google-payload.interface';
 import { Constants } from '@app/common/constants/constants';
+import { Profile, Strategy } from 'passport-facebook';
 
 @Injectable()
-export class GoogleStrategy extends PassportStrategy(
+export class FacebookStrategy extends PassportStrategy(
   Strategy,
-  Constants.GOOGLE,
+  Constants.FACEBOOK,
 ) {
   constructor(private readonly configService: ConfigService) {
     super({
-      clientID: configService.get<string>('GOOGLE_CLIENT_ID'),
-      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
-      callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL'),
-      scope: ['email', 'profile'],
+      clientID: configService.get<string>('FACEBOOK_CLIENT_ID'),
+      clientSecret: configService.get<string>('FACEBOOK_CLIENT_SECRET'),
+      callbackURL: configService.get<string>('FACEBOOK_CALLBACK_URL'),
+      profileFields: [
+        'id',
+        'displayName',
+        'name',
+        'gender',
+        'picture.type(large)',
+        'email',
+      ],
     });
   }
 
@@ -23,15 +30,15 @@ export class GoogleStrategy extends PassportStrategy(
     accessToken: string,
     refreshToken: string,
     profile: Profile,
-    done: VerifyCallback,
+    done: (error: any, user?: any) => void,
   ): Promise<any> {
-    const { name, emails, photos, id } = profile;
+    const { name, photos, id } = profile;
     const user: OAuthPayload = {
+      id: id,
       firstName: name.givenName,
       lastName: name.familyName,
-      email: emails[0].value,
+      email: null,
       profileImage: photos[0].value,
-      id,
       accessToken,
       refreshToken,
     };
